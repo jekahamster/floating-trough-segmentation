@@ -3,9 +3,11 @@ import numpy as np
 import cv2
 import imageio
 import tensorflow as tf
+import pandas as pd
 
 from pathlib import Path
 from tensorflow import keras
+from utils import rle_decode
 
 
 class DataGenerator(keras.utils.Sequence):
@@ -74,6 +76,90 @@ class DataGenerator(keras.utils.Sequence):
         mask = cv2.resize(mask, (self.width, self.height), interpolation=cv2.INTER_NEAREST)
         mask = np.array(mask, dtype=np.float32)
         mask = np.expand_dims(mask, axis=-1)
+        
+        if self.transform is not None:
+            transformed = self.transform(image=img, mask=mask)
+            img = transformed["image"]
+            mask = transformed["mask"]
+
+        return img, mask
+    
+
+
+class CSVDataGenerator(keras.utils.Sequence):
+    def __init__(self, 
+                 images_path, 
+                 csv_path, 
+                 image_type="jpg", 
+                 batch_size=32, 
+                 shuffle=True, 
+                 height=128, 
+                 width=128, 
+                 transform=None):
+        
+        self.images_path = images_path
+        self.csv_path = csv_path 
+        self.df_data = pd.read_csv(csv_path)
+
+        self.image_type = image_type
+
+        self.fnames_stem = [Path(fname).stem for fname in os.listdir(images_path)]
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.height = height
+        self.width = width
+        self.transform = transform
+        self.on_epoch_end()
+
+    def on_epoch_end(self):
+        if self.shuffle:
+            np.random.shuffle(self.fnames_stem)
+
+    def __len__(self):
+        return len(self.fnames_stem) // self.batch_size
+
+    def __getitem__(self, index):
+        X, y = self.get_batch(index)
+        return X, y
+
+    def get_batch(self, index):
+        start_index = index * self.batch_size
+        end_index = (index + 1) * self.batch_size
+
+        X = np.empty((self.batch_size, self.height, self.width, 3), dtype=float)
+        y = np.empty((self.batch_size, self.height, self.width, 1), dtype=float)
+
+        for i, sample_index in enumerate(range(start_index, end_index)):
+            img, mask = self.get_single(sample_index)
+            X[i,] = img
+            y[i,] = mask
+
+        X = tf.convert_to_tensor(X)
+        y = tf.convert_to_tensor(y)
+
+        return X, y
+    
+    def get_single(self, index):
+        fname_stem = self.fnames_stem[index]
+        fname = f"{fname_stem}.{self.image_type}"
+
+        img_path = self.images_path / fname
+
+        img = imageio.imread(img_path)
+        orig_img_height, orig_img_width = img.shape[:2]
+
+        img = cv2.resize(img, (self.width, self.height), interpolation=cv2.INTER_NEAREST)
+        img = np.array(img, dtype=np.float32) / 255.0
+
+        rle_mask = self.df_data[self.df_data["ImageId"] == fname]["EncodedPixels"].values[0]
+
+        if rle_mask is np.nan:
+            mask = np.zeros((self.height, self.width, 1), dtype=np.float32)
+        else:
+            mask = rle_decode(rle_mask, (orig_img_height, orig_img_width))
+            mask = cv2.resize(mask, (self.width, self.height), interpolation=cv2.INTER_NEAREST)
+            mask = np.array(mask, dtype=np.float32)
+            mask = np.expand_dims(mask, axis=-1)
         
         if self.transform is not None:
             transformed = self.transform(image=img, mask=mask)
