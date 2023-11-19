@@ -11,3 +11,4 @@ src/media/output*
 src/media/training_history*
 src/data/*
 # !src/data/*.csv
+TEST_README.md
