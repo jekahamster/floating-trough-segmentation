@@ -1,0 +1,13 @@
+useful_links.txt
+*__pycache__*
+.vscode
+.ipynb_checkpoints
+venv
+cmd_params.txt
+
+src/backups
+src/weights/*.h5
+src/media/output*
+src/media/training_history*
+src/data/*
+# !src/data/*.csv

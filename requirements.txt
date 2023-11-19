@@ -1,0 +1,15 @@
+jupyterlab
+notebook
+numpy 
+matplotlib 
+tensorflow-gpu==2.9.2
+opencv-python
+pandas
+imageio
+Pillow 
+scipy
+tqdm
+jupyter 
+ipywidgets
+scikit-learn
+albumentations
