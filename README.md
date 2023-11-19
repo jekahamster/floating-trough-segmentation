@@ -131,16 +131,13 @@ usage: inference.py [-h] --model_path MODEL_PATH --image_path IMAGE_PATH --outpu
 Run inference script
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --model_path MODEL_PATH
-                        Path to model
-  --image_path IMAGE_PATH
-                        Path to image
-  --output_path OUTPUT_PATH
-                        Path to output
-  --height HEIGHT       Resized image height (model input)
-  --width WIDTH         Resized image width (model input)
-  --show                Show output in window
+  -h, --help                    show this help message and exit
+  --model_path MODEL_PATH       Path to model
+  --image_path IMAGE_PATH       Path to image
+  --output_path OUTPUT_PATH     Path to output
+  --height HEIGHT               Resized image height (model input)
+  --width WIDTH                 Resized image width (model input)
+  --show                        Show output in window
 
 
   Example: 
